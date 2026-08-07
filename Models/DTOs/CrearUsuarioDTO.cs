@@ -10,4 +10,5 @@ public class CrearUsuarioDTO
     public string Nombre { get; set; }
     [Required(ErrorMessage = "La contraseña es obligatoria")]
     public string Password { get; set; }
+    public string Rol { get; set; }
 }
