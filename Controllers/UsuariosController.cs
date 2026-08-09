@@ -2,6 +2,7 @@
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -10,6 +11,7 @@ namespace ApiPeliculas.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioRepository _usuarioRepository;
@@ -23,7 +25,7 @@ namespace ApiPeliculas.Controllers
             this._respuestaAPI = new RespuestaAPI();
         }
 
-
+        [Authorize(Roles = "Admin")]
         [HttpGet()]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -56,6 +58,7 @@ namespace ApiPeliculas.Controllers
             return Ok(_maper.Map<UsuarioDTO>(usuario));
         }
 
+        [AllowAnonymous]
         [HttpPost("Registro")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -87,7 +90,8 @@ namespace ApiPeliculas.Controllers
             return Ok(_respuestaAPI);
         }
 
-        [HttpPost("Loogin")]
+        [AllowAnonymous]
+        [HttpPost("Login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -2,6 +2,7 @@
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,8 @@ namespace ApiPeliculas.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
+//[Authorize(Roles = "Administrador")]
+
 public class CategoriaController : ControllerBase
 {
     private readonly ICategoriaRepository _repositoryCategoria;
@@ -22,6 +25,7 @@ public class CategoriaController : ControllerBase
         _mapper = mapper;
     }
 
+    //[AllowAnonymous]  //Poner publico aunque la clase tenga authorize
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -40,6 +44,7 @@ public class CategoriaController : ControllerBase
         return Ok(listaCategoriasDTO);
     }
 
+    //[AllowAnonymous]
     [HttpGet("{id:int}", Name = "GetCategoria")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -56,6 +61,7 @@ public class CategoriaController : ControllerBase
         return Ok(categoriaDTO);
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -86,6 +92,7 @@ public class CategoriaController : ControllerBase
         return CreatedAtRoute("GetCategoria", new { id = categoria.Id }, categoria);
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpPatch("{id:int}", Name = "PatchCategoria")] //Patch nos permite actualizar solo un campo
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -113,6 +120,7 @@ public class CategoriaController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpPut("{id:int}", Name = "PutCategoria")] //Put nos permite actualizar todo el modelo
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -139,6 +147,7 @@ public class CategoriaController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpDelete("{id:int}", Name = "DeleteCategoria")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

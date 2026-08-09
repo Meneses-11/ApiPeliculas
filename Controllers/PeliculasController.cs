@@ -2,6 +2,7 @@
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace ApiPeliculas.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Roles = "Administrador")]
 public class PeliculasController : ControllerBase
 {
     private readonly IPeliculaRepository _repositoryPelicula;
@@ -20,6 +22,7 @@ public class PeliculasController : ControllerBase
         _mapper = mapper;
     }
 
+    [AllowAnonymous]
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -37,6 +40,7 @@ public class PeliculasController : ControllerBase
         return Ok(listaPeliculasDTO);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:int}", Name = "GetPelicula")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -132,6 +136,7 @@ public class PeliculasController : ControllerBase
         return NoContent();
     }
 
+    [AllowAnonymous]
     [HttpGet("GetPeliculasXCategoria/{idCategoria:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -153,6 +158,7 @@ public class PeliculasController : ControllerBase
         return Ok(itemPelicula);
     }
 
+    [AllowAnonymous]
     [HttpGet("PeliculasSearch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

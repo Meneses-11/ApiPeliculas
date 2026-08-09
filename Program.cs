@@ -5,6 +5,10 @@ using ApiPeliculas.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.IdentityModel.Tokens.Experimental;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AplicationDBContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionLocalSql"));
+});
+
+//Authentication config
+
+var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
 });
 
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
@@ -54,6 +79,8 @@ else
 {
     app.UseCors("CORSPolicy");
 }
+
+app.UseAuthentication();
 
 app.UseHttpsRedirection();
 
