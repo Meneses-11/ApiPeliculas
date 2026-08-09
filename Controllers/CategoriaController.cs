@@ -2,6 +2,7 @@
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using AutoMapper;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace ApiPeliculas.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+//[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
 public class CategoriaController : ControllerBase
 {
     private readonly ICategoriaRepository _repositoryCategoria;
@@ -23,6 +25,7 @@ public class CategoriaController : ControllerBase
     [HttpGet()]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un endpoint 
     public IActionResult GetCategorias()
     {
         var listaCategorias = _repositoryCategoria.GetCategorias();
