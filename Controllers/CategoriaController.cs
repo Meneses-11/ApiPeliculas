@@ -13,7 +13,7 @@ namespace ApiPeliculas.Controllers;
 [ApiController]
 //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
 //[Authorize(Roles = "Administrador")]
-
+//[ResponseCache(Duration = 20)] //Cache a nivel controlador, Tiempo en segundos
 public class CategoriaController : ControllerBase
 {
     private readonly ICategoriaRepository _repositoryCategoria;
@@ -27,6 +27,8 @@ public class CategoriaController : ControllerBase
 
     //[AllowAnonymous]  //Poner publico aunque la clase tenga authorize
     [HttpGet()]
+    //[ResponseCache(Duration = 20)]
+    [ResponseCache(CacheProfileName = "Global30Cache")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un endpoint 
@@ -46,6 +48,8 @@ public class CategoriaController : ControllerBase
 
     //[AllowAnonymous]
     [HttpGet("{id:int}", Name = "GetCategoria")]
+    //[ResponseCache(Duration = 40)]
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)] //Donde guardar cliente o servidor, Las respoestas no deben ser almacenadas en cache
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
