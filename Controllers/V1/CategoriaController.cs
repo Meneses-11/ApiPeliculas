@@ -1,19 +1,22 @@
 ﻿using ApiPeliculas.Models;
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ApiPeliculas.Controllers;
+namespace ApiPeliculas.Controllers.V1;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
 //[Authorize(Roles = "Administrador")]
 //[ResponseCache(Duration = 20)] //Cache a nivel controlador, Tiempo en segundos
+[ApiVersion("1.0")]//, Deprecated = true)]
+//[Obsolete("Esta version del controlador esta obsoleta")]
 public class CategoriaController : ControllerBase
 {
     private readonly ICategoriaRepository _repositoryCategoria;
@@ -25,6 +28,13 @@ public class CategoriaController : ControllerBase
         _mapper = mapper;
     }
 
+    [HttpGet("GetString")]
+    //[MapToApiVersion("2.0")]
+    public IEnumerable<string> Get()
+    {
+        return new string[] { "valor1", "valor2", "valor3" };
+    }
+
     //[AllowAnonymous]  //Poner publico aunque la clase tenga authorize
     [HttpGet()]
     //[ResponseCache(Duration = 20)]
@@ -32,6 +42,7 @@ public class CategoriaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un endpoint 
+    //[MapToApiVersion("1.0")]
     public IActionResult GetCategorias()
     {
         var listaCategorias = _repositoryCategoria.GetCategorias();
@@ -54,6 +65,7 @@ public class CategoriaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    //[Obsolete("Este endpoint del controlador esta obsoleta")]
     public IActionResult GetCategoria([FromRoute] int id)
     {
         var categoria = _repositoryCategoria.GetCategoria(id);

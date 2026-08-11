@@ -1,6 +1,7 @@
 ﻿using ApiPeliculas.Models;
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,9 +10,12 @@ using System.Net;
 
 namespace ApiPeliculas.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize]
+    [ApiVersionNeutral]
+    //[ApiVersion("1.0")]
+    //[ApiVersion("2.0")]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioRepository _usuarioRepository;
@@ -22,7 +26,7 @@ namespace ApiPeliculas.Controllers
         {
             _usuarioRepository = usuarioRepository;
             _maper = mapper;
-            this._respuestaAPI = new RespuestaAPI();
+            _respuestaAPI = new RespuestaAPI();
         }
 
         [Authorize(Roles = "Admin")]

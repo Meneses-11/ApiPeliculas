@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +80,40 @@ builder.Services.AddSwaggerGen(options =>
             new List<string>()
         }
     });
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1.0",
+        Title = "Movies API V1",
+        Description = "Movies API",
+        TermsOfService = new Uri("https://github.com/Meneses-11/ApiPeliculas"),
+        Contact = new OpenApiContact
+        {
+            Name = "Adrian Meneses",
+            Url = new Uri("https://www.linkedin.com/in/menesesadrian/")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Licencia Personal",
+            Url = new Uri("https://github.com/Meneses-11/ApiPeliculas.git")
+        }
+    });
+    options.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Version = "v2.0",
+        Title = "Movies API V2",
+        Description = "Movies API",
+        TermsOfService = new Uri("https://github.com/Meneses-11/ApiPeliculas"),
+        Contact = new OpenApiContact
+        {
+            Name = "Adrian Meneses",
+            Url = new Uri("https://www.linkedin.com/in/menesesadrian/")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Licencia Personal",
+            Url = new Uri("https://github.com/Meneses-11/ApiPeliculas.git")
+        }
+    });
 });
 
 builder.Services.AddCors(options => {
@@ -98,13 +133,38 @@ builder.Services.AddCors(options => {
     });
 });
 
+//Configuracion para versionamiento
+var apiVersioningBuilder = builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    /*options.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("api-version")//?api-version=1.0
+        //new HeaderApiVersionReader("X-Version"),
+        //new MediaTypeApiVersionReader("ver"));
+    );*/
+});
+
+apiVersioningBuilder.AddApiExplorer(
+    options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    }
+);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiPeliculasV1");
+        options.SwaggerEndpoint("/swagger/v2/swagger.json", "ApiPeliculasV2");
+    });
     app.UseCors("CORSDev");
 }
 else

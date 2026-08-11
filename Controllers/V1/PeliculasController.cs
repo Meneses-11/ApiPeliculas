@@ -1,16 +1,19 @@
 ﻿using ApiPeliculas.Models;
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
+using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ApiPeliculas.Controllers;
+namespace ApiPeliculas.Controllers.V1;
 
-[Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [Authorize(Roles = "Administrador")]
+[ApiVersion("1.0")]
+//[ApiVersion("2.0")]
 public class PeliculasController : ControllerBase
 {
     private readonly IPeliculaRepository _repositoryPelicula;
