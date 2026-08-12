@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Identity;
+using ApiPeliculas.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +20,11 @@ builder.Services.AddDbContext<AplicationDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionLocalSql"));
 });
 
-//Authentication config
+
+//.NET Identity Authentication config Debe ir antes de jwt
+builder.Services.AddIdentity<UsuarioIdentity, IdentityRole>().AddEntityFrameworkStores<AplicationDBContext>();
+
+//JWT Authentication config
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 

@@ -29,7 +29,7 @@ namespace ApiPeliculas.Controllers
             _respuestaAPI = new RespuestaAPI();
         }
 
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpGet()]
         [ResponseCache(CacheProfileName = "Global30Cache")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -48,13 +48,13 @@ namespace ApiPeliculas.Controllers
             return Ok(listaUsuariosDTO);
         }
 
-        [HttpGet("{id:int}", Name = "GetUsuario")]
+        [HttpGet("{id}", Name = "GetUsuario")]
         [ResponseCache(CacheProfileName = "Global30Cache")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetUsuario(int id)
+        public IActionResult GetUsuario(string id)
         {
             var usuario = _usuarioRepository.GetUsuario(id);
 

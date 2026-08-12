@@ -12,5 +12,7 @@ public class PeliculasMapper : Profile
         CreateMap<Categoria, CrearCategoriaDTO>().ReverseMap();
         CreateMap<Pelicula, PeliculaDTO>().ReverseMap();
         CreateMap<Pelicula, CrearPeliculaDTO>().ReverseMap();
+        CreateMap<UsuarioIdentity, UsuarioDatosDTO>().ReverseMap();
+        CreateMap<UsuarioIdentity, UsuarioDTO>().ReverseMap();
     }
 }
