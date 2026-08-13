@@ -21,6 +21,8 @@ appsettings.Development.json
 launchSettings.json
 appsettings.*.json
 !appsettings.json
+# Imagenes
+ImgMovies/
 
 # Mono auto generated files
 mono_crash.*

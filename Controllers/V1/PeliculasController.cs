@@ -11,7 +11,7 @@ namespace ApiPeliculas.Controllers.V1;
 
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-[Authorize(Roles = "Administrador")]
+[Authorize(Roles = "Admin")]
 [ApiVersion("1.0")]
 //[ApiVersion("2.0")]
 public class PeliculasController : ControllerBase
@@ -68,7 +68,7 @@ public class PeliculasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult PostPelicula([FromBody] CrearPeliculaDTO crearPeliculaDTO)
+    public IActionResult PostPelicula([FromForm] CrearPeliculaDTO crearPeliculaDTO)
     {
         if(!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -81,6 +81,40 @@ public class PeliculasController : ControllerBase
         }
 
         var pelicula = _mapper.Map<Pelicula>(crearPeliculaDTO);
+
+        /*if (!_repositoryPelicula.CreatePelicula(pelicula))
+        {
+            ModelState.AddModelError("", $"No se pudo crear la pelicula con id {pelicula.Id}");
+            return StatusCode(404, ModelState);
+        }*/
+
+        if(crearPeliculaDTO.Imagen != null)
+        {
+            string nombreArchivo = pelicula.Id + System.Guid.NewGuid().ToString() + Path.GetExtension(crearPeliculaDTO.Imagen.FileName);
+            string rutaArchivo = @"wwwroot\ImgMovies\" + nombreArchivo;
+
+            var ubicacionDirectory = Path.Combine(Directory.GetCurrentDirectory(), rutaArchivo);
+
+            FileInfo file = new FileInfo(ubicacionDirectory);
+
+            if (file.Exists)
+            {
+                file.Delete();
+            }
+
+            using (var fileStream = new FileStream(ubicacionDirectory, FileMode.Create))
+            {
+                crearPeliculaDTO.Imagen.CopyTo(fileStream);
+            }
+
+            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}"; //Contruye la url en base al sitio web actual
+            pelicula.RutaImagen = baseUrl + "/ImgMovies/" + nombreArchivo;
+            pelicula.RutaLocalImagen = rutaArchivo;
+        }
+        else
+        {
+            pelicula.RutaImagen = "https://placehold.co/600x400";
+        }
 
         if (!_repositoryPelicula.CreatePelicula(pelicula))
         {
@@ -98,16 +132,44 @@ public class PeliculasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult PatchPelicula(int id, [FromBody] PeliculaDTO peliculaDTO)
+    public IActionResult PatchPelicula(int id, [FromForm] ActualizarPeliculaDTO actualizarPeliculaDTO)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (peliculaDTO == null || id != peliculaDTO.Id) return BadRequest(ModelState);
+        if (actualizarPeliculaDTO == null || id != actualizarPeliculaDTO.Id) return BadRequest(ModelState);
 
         var categoriaExistente = _repositoryPelicula.GetPelicula(id);
         if (categoriaExistente == null) return NotFound($"No se encontro la pelicula con id: {id}");
 
-        var pelicula = _mapper.Map<Pelicula>(peliculaDTO);
+        var pelicula = _mapper.Map<Pelicula>(actualizarPeliculaDTO);
+
+        if (actualizarPeliculaDTO.Imagen != null)
+        {
+            string nombreArchivo = pelicula.Id + System.Guid.NewGuid().ToString() + Path.GetExtension(actualizarPeliculaDTO.Imagen.FileName);
+            string rutaArchivo = @"wwwroot\ImgMovies\" + nombreArchivo;
+
+            var ubicacionDirectory = Path.Combine(Directory.GetCurrentDirectory(), rutaArchivo);
+
+            FileInfo file = new FileInfo(ubicacionDirectory);
+
+            if (file.Exists)
+            {
+                file.Delete();
+            }
+
+            using (var fileStream = new FileStream(ubicacionDirectory, FileMode.Create))
+            {
+                actualizarPeliculaDTO.Imagen.CopyTo(fileStream);
+            }
+
+            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.PathBase.Value}"; //Contruye la url en base al sitio web actual
+            pelicula.RutaImagen = baseUrl + "/ImgMovies/" + nombreArchivo;
+            pelicula.RutaLocalImagen = rutaArchivo;
+        }
+        else
+        {
+            pelicula.RutaImagen = "https://placehold.co/600x400";
+        }
 
         if (!_repositoryPelicula.EditPelicula(pelicula))
         {

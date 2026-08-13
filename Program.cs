@@ -178,6 +178,9 @@ else
     app.UseCors("CORSPolicy");
 }
 
+//Statics file Config
+app.UseStaticFiles();
+
 app.UseAuthentication();
 
 app.UseHttpsRedirection();
