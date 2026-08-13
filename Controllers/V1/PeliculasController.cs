@@ -26,21 +26,35 @@ public class PeliculasController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpGet()]
+    [HttpGet("{pageNumber:int}/{pageSize:int}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult GetPeliculas()
+    public IActionResult GetPeliculas([FromRoute] int pageNumber = 1, [FromRoute] int pageSize = 10)
     {
-        var listaPeliculas = _repositoryPelicula.GetPeliculas();
-
-        var listaPeliculasDTO = new List<PeliculaDTO>();
-
-        foreach (var peli in listaPeliculas)
+        try
         {
-            listaPeliculasDTO.Add(_mapper.Map<PeliculaDTO>(peli));
-        }
+            var totalPeliculas = _repositoryPelicula.GetTotalPeliculas();
+            var peliculas = _repositoryPelicula.GetPeliculas(pageNumber, pageSize);
 
-        return Ok(listaPeliculasDTO);
+            if (peliculas == null || !peliculas.Any()) return NotFound("No se encontraron Peliculas");
+
+            var peliculasDTO = peliculas.Select(pel => _mapper.Map<PeliculaDTO>(pel)).ToList();
+
+            var response = new
+            {
+                PageNumber = pageNumber,
+                pageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalPeliculas / (double)pageSize),
+                TotalItems = totalPeliculas,
+                Items = peliculasDTO
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "Error recuperando informacion de la aplicacion");
+        }
     }
 
     [AllowAnonymous]
@@ -209,18 +223,20 @@ public class PeliculasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult GetPeliculasXCategorias(int idCategoria)
     {
-        var listaPeliculas = _repositoryPelicula.GetPeliculasXCategoria(idCategoria);
-        
-        if(listaPeliculas == null) return NotFound();
-
-        var itemPelicula = new List<PeliculaDTO>();
-
-        foreach(var peli in listaPeliculas)
+        try
         {
-            itemPelicula.Add(_mapper.Map<PeliculaDTO>(peli));
-        }
+            var listaPeliculas = _repositoryPelicula.GetPeliculasXCategoria(idCategoria);
 
-        return Ok(itemPelicula);
+            if (listaPeliculas == null || !listaPeliculas.Any()) return NotFound($"No se encontraron Peliculas en la categoria con id: {idCategoria}");
+
+            var itemPelicula = listaPeliculas.Select(pel => _mapper.Map<PeliculaDTO>(pel)).ToList();
+
+            return Ok(itemPelicula);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "Error recuperando datos de la aplicacion");
+        }
     }
 
     [AllowAnonymous]
@@ -233,13 +249,15 @@ public class PeliculasController : ControllerBase
     {
         try
         {
-            var resultado = _repositoryPelicula.SearchPelicula(nombre);
-            if (resultado.Any())
+            var peliculas = _repositoryPelicula.SearchPelicula(nombre);
+            if (!peliculas.Any())
             {
-                return Ok(resultado);
+                return NotFound($"No se encontraron Peliculas con los criterios de búsqueda.");
             }
 
-            return NotFound();
+            var peliculasDTO = _mapper.Map<IEnumerable<PeliculaDTO>>(peliculas);
+
+            return Ok(peliculasDTO);
         }
         catch (Exception ex) {
             return StatusCode(StatusCodes.Status500InternalServerError, "Error recuperando datos: "+ex.Message);

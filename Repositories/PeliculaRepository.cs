@@ -56,9 +56,19 @@ public class PeliculaRepository : IPeliculaRepository
         return _dbContext.Pelicula.FirstOrDefault(peli => peli.Id == id);
     }
 
-    public ICollection<Pelicula> GetPeliculas()
+    //public ICollection<Pelicula> GetPeliculas()
+    //{
+    //    return _dbContext.Pelicula.OrderBy(pel => pel.Nombre).ToList();
+    //}
+
+    public int GetTotalPeliculas()
     {
-        return _dbContext.Pelicula.OrderBy(pel => pel.Nombre).ToList();
+        return _dbContext.Pelicula.Count();
+    }
+
+    public ICollection<Pelicula> GetPeliculas(int pageNumber, int pageSize)
+    {
+        return _dbContext.Pelicula.OrderBy(pel => pel.Nombre).Skip((pageNumber-1)*pageSize).Take(pageSize).ToList();
     }
 
     public ICollection<Pelicula> GetPeliculasXCategoria(int idCategoria)
