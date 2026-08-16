@@ -1,16 +1,19 @@
+using System.Text;
+
 using ApiPeliculas.Data;
+using ApiPeliculas.Models;
 using ApiPeliculas.PeliculasMappers;
 using ApiPeliculas.Repositories;
 using ApiPeliculas.Repositories.IRepositories;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Mvc;
+
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using ApiPeliculas.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +60,30 @@ builder.Services.AddControllers(options =>
     //Configurar Cache global
     options.CacheProfiles.Add("Global30Cache", new CacheProfile() { Duration = 30});
 });
+
+
+//Configuracion para versionamiento
+var apiVersioningBuilder = builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    /*options.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("api-version")//?api-version=1.0
+        //new HeaderApiVersionReader("X-Version"),
+        //new MediaTypeApiVersionReader("ver"));
+    );*/
+});
+
+apiVersioningBuilder.AddApiExplorer(
+    options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    }
+);
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -141,27 +168,6 @@ builder.Services.AddCors(options => {
     });
 });
 
-//Configuracion para versionamiento
-var apiVersioningBuilder = builder.Services.AddApiVersioning(options =>
-{
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.ReportApiVersions = true;
-    /*options.ApiVersionReader = ApiVersionReader.Combine(
-        new QueryStringApiVersionReader("api-version")//?api-version=1.0
-        //new HeaderApiVersionReader("X-Version"),
-        //new MediaTypeApiVersionReader("ver"));
-    );*/
-});
-
-apiVersioningBuilder.AddApiExplorer(
-    options =>
-    {
-        options.GroupNameFormat = "'v'VVV";
-        options.SubstituteApiVersionInUrl = true;
-    }
-);
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -183,9 +189,9 @@ else
 //Statics file Config
 app.UseStaticFiles();
 
-app.UseAuthentication();
-
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
