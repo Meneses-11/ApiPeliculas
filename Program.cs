@@ -122,18 +122,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+string[] allowedOriginsDev = builder.Configuration.GetSection("ApiSettings:AllowedOriginsDev").Get<string[]>() ?? [];
+string[] allowedOrigins = builder.Configuration.GetSection("ApiSettings:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => {
     //Cors para ambiente de produccion
     options.AddPolicy("CORSPolicy", policy =>
     {
-        policy.WithOrigins("*")
+        policy.WithOrigins(allowedOrigins)
         .AllowAnyMethod()
         .AllowAnyHeader();
     });
     //Cors para ambiente de desarrollo
     options.AddPolicy("CORSDev", policy =>
     {
-        policy.WithOrigins("*")
+        policy.WithOrigins(allowedOriginsDev)
         .AllowAnyHeader()
         .AllowAnyMethod();
     });
@@ -163,14 +165,14 @@ apiVersioningBuilder.AddApiExplorer(
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiPeliculasV1");
+    options.SwaggerEndpoint("/swagger/v2/swagger.json", "ApiPeliculasV2");
+});
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiPeliculasV1");
-        options.SwaggerEndpoint("/swagger/v2/swagger.json", "ApiPeliculasV2");
-    });
     app.UseCors("CORSDev");
 }
 else
