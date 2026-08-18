@@ -32,97 +32,145 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<UsuarioIdentity> GetUsuario(string id)
     {
-        return await _dbContext.UsuarioIdentity.FindAsync(id);
+        try
+        {
+            return await _dbContext.UsuarioIdentity.FindAsync(id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Obtener Usuarios: {ex.Message}");
+        }
     }
 
-    public ICollection<UsuarioIdentity> GetUsuarios()
+    public async Task<ICollection<UsuarioIdentity>> GetUsuarios()
     {
-        return _dbContext.UsuarioIdentity.OrderBy(x => x.UserName).ToList();
+        try
+        {
+            return await _dbContext.UsuarioIdentity.OrderBy(x => x.UserName).ToListAsync();
+        }
+        catch(Exception ex)
+        {
+            throw new Exception($"Error al Obneter Usuario: {ex.Message}");
+        };
     }
 
-    public bool IsUniqueUser(string username)
+    public async Task<bool> IsUniqueUser(string username)
     {
-        return _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName == username) == null ? true : false;
+        try
+        {
+            return ((await _dbContext.UsuarioIdentity.FirstOrDefaultAsync(usr => usr.UserName == username)) == null ? true : false);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al verificar si es unico: {ex.Message}");
+        }
     }
 
     public async Task<UsuarioResponseDTO> Login(UsuarioLoginDTO usuarioLoginDTO)
     {
-        //var passwordEncypt = ObtenerMD5(usuarioLoginDTO.Password);
-        var usuario = _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower());
-        bool isValid = await _userMAnager.CheckPasswordAsync(usuario, usuarioLoginDTO.Password);
-
-        if(usuario == null || !isValid)
+        try
         {
-            return new UsuarioResponseDTO()
-            {
-                Token = "",
-                Usuario = null
-            };
-        }
+            var usuario = _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower());
+            bool isValid = await _userMAnager.CheckPasswordAsync(usuario, usuarioLoginDTO.Password);
 
-        var roles = await _userMAnager.GetRolesAsync(usuario);
-        var manejadorToken = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(claveSecreta);
-
-        var tokenDescription = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new Claim[]
+            if (usuario == null || !isValid)
             {
+                return new UsuarioResponseDTO()
+                {
+                    Token = "",
+                    Usuario = null
+                };
+            }
+
+            var roles = await _userMAnager.GetRolesAsync(usuario);
+            var manejadorToken = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(claveSecreta);
+
+            var tokenDescription = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
                 new Claim(ClaimTypes.Name, usuario.UserName.ToString()),
                 new Claim(ClaimTypes.Role, roles.FirstOrDefault())
-            }),
-            Expires = DateTime.UtcNow.AddDays(7),
-            SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-        var token = manejadorToken.CreateToken(tokenDescription);
+            var token = manejadorToken.CreateToken(tokenDescription);
 
-        UsuarioResponseDTO usuarioResponseDTO = new UsuarioResponseDTO()
+            UsuarioResponseDTO usuarioResponseDTO = new UsuarioResponseDTO()
+            {
+                Token = manejadorToken.WriteToken(token),
+                Usuario = _mapper.Map<UsuarioDatosDTO>(usuario)
+            };
+
+            return usuarioResponseDTO;
+        }
+        catch (Exception ex)
         {
-            Token = manejadorToken.WriteToken(token),
-            Usuario = _mapper.Map<UsuarioDatosDTO>(usuario)
-        };
-
-        return usuarioResponseDTO;
+            throw new Exception($"Error al intentar iniciar sesion: {ex.Message}");
+        }
     }
 
     public async Task<UsuarioDatosDTO> Registro(CrearUsuarioDTO crearUsuarioDTO)
     {
-        UsuarioIdentity usuario = new UsuarioIdentity()
+        try
         {
-            UserName = crearUsuarioDTO.NombreUsuario,
-            Email = crearUsuarioDTO.NombreUsuario,
-            NormalizedUserName = crearUsuarioDTO.NombreUsuario.ToUpper(),
-            Nombre = crearUsuarioDTO.Nombre
-        };
-
-        var result = await _userMAnager.CreateAsync(usuario, crearUsuarioDTO.Password);
-
-        if (result.Succeeded)
-        {
-            if (!_rolManager.RoleExistsAsync("Admin").GetAwaiter().GetResult())
+            UsuarioIdentity usuario = new UsuarioIdentity()
             {
-                await _rolManager.CreateAsync(new IdentityRole("Admin"));
-                await _rolManager.CreateAsync(new IdentityRole("Registrado"));
+                UserName = crearUsuarioDTO.NombreUsuario,
+                Email = crearUsuarioDTO.NombreUsuario,
+                NormalizedUserName = crearUsuarioDTO.NombreUsuario.ToUpper(),
+                Nombre = crearUsuarioDTO.Nombre
+            };
+
+            var result = await _userMAnager.CreateAsync(usuario, crearUsuarioDTO.Password);
+
+            if (result.Succeeded)
+            {
+                if (!(await _rolManager.RoleExistsAsync("Admin")))
+                {
+                    await _rolManager.CreateAsync(new IdentityRole("Admin"));
+                    await _rolManager.CreateAsync(new IdentityRole("Registrado"));
+                }
+
+                await _userMAnager.AddToRoleAsync(usuario, "Admin");
+                var usuarioRetornado = _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName == usuario.UserName);
+
+                return _mapper.Map<UsuarioDatosDTO>(usuarioRetornado);
             }
 
-            await _userMAnager.AddToRoleAsync(usuario, "Admin");
-            var usuarioRetornado = _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName == usuario.UserName);
-
-            return _mapper.Map<UsuarioDatosDTO>(usuarioRetornado);
+            return new UsuarioDatosDTO();
         }
-
-        return new UsuarioDatosDTO();
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al intentar registrar Usuario: {ex.Message}");
+        }
     }
 
     public async Task<bool> DeleteUsuario(UsuarioIdentity usuario)
     {
-        _dbContext.UsuarioIdentity.Remove(usuario);
-        return await _dbContext.SaveChangesAsync() > 0;
+        try
+        {
+            _dbContext.UsuarioIdentity.Remove(usuario);
+            return await _dbContext.SaveChangesAsync() > 0;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al intentar eliminar usuario: {ex.Message}");
+        }
     }
 
     public async Task<bool> ExisteUsuario(string id)
     {
-        return (await _dbContext.UsuarioIdentity.AnyAsync(usr => usr.Id == id));
+        try
+        {
+            return (await _dbContext.UsuarioIdentity.AnyAsync(usr => usr.Id == id));
+        }
+        catch (Exception ex) 
+        {
+            throw new Exception($"Error al verificar si existe usuario: {ex.Message}");
+        }
     }
 }

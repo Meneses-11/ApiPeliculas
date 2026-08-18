@@ -29,21 +29,32 @@ namespace ApiPeliculas.Controllers
         [Authorize(Roles = "Admin")]
         [HttpGet()]
         [ResponseCache(CacheProfileName = "Global30Cache")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult GetUsuarios()
+        public async Task<IActionResult> GetUsuarios()
         {
-            var listaUsuarios = _usuarioRepository.GetUsuarios();
+            try
+            {
+                var listaUsuarios = await _usuarioRepository.GetUsuarios();
 
-            var listaUsuariosDTO = new List<UsuarioDTO>();
+                var listaUsuariosDTO = new List<UsuarioDTO>();
 
-            listaUsuariosDTO = _maper.Map<List<UsuarioDTO>>(listaUsuarios);
+                listaUsuariosDTO = _maper.Map<List<UsuarioDTO>>(listaUsuarios);
 
-            _respuestaAPI.IsSuccess = true;
-            _respuestaAPI.StatusCode = HttpStatusCode.OK;
-            _respuestaAPI.Result = listaUsuariosDTO;
-            return Ok(_respuestaAPI);
+                _respuestaAPI.IsSuccess = true;
+                _respuestaAPI.StatusCode = HttpStatusCode.OK;
+                _respuestaAPI.Result = listaUsuariosDTO;
+                return Ok(_respuestaAPI);
+            }
+            catch (Exception ex)
+            {
+                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                return StatusCode(500, _respuestaAPI);
+            }
         }
 
         [HttpGet("{id}", Name = "GetUsuario")]
@@ -51,22 +62,33 @@ namespace ApiPeliculas.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetUsuario(string id)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUsuario(string id)
         {
-            var usuario = _usuarioRepository.GetUsuario(id);
+            try 
+            { 
+                var usuario = await _usuarioRepository.GetUsuario(id);
 
-            if (usuario == null)
+                if (usuario == null)
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
+                    _respuestaAPI.ErrorMessage.Add("El usuario no Existe");
+                    return NotFound(_respuestaAPI);
+                }
+
+                _respuestaAPI.IsSuccess = true;
+                _respuestaAPI.StatusCode = HttpStatusCode.OK;
+                _respuestaAPI.Result = _maper.Map<UsuarioDTO>(usuario);
+                return Ok(_respuestaAPI);
+            }
+            catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
-                _respuestaAPI.ErrorMessage.Add("El usuario no Existe");
-                return NotFound(_respuestaAPI);
+                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                return StatusCode(500, _respuestaAPI);
             }
-
-            _respuestaAPI.IsSuccess = true;
-            _respuestaAPI.StatusCode = HttpStatusCode.OK;
-            _respuestaAPI.Result = _maper.Map<UsuarioDTO>(usuario);
-            return Ok(_respuestaAPI);
         }
 
         [AllowAnonymous]
@@ -76,31 +98,41 @@ namespace ApiPeliculas.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RegistroUsuario([FromBody] CrearUsuarioDTO crearUsuarioDTO)
         {
-            bool usuarioUnico = _usuarioRepository.IsUniqueUser(crearUsuarioDTO.NombreUsuario);
+            try 
+            { 
+                bool usuarioUnico = await _usuarioRepository.IsUniqueUser(crearUsuarioDTO.NombreUsuario);
 
-            if (!usuarioUnico)
-            {
-                _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
-                _respuestaAPI.ErrorMessage.Add("El nombre de usuario ya existe");
-                return BadRequest(_respuestaAPI);
+                if (!usuarioUnico)
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
+                    _respuestaAPI.ErrorMessage.Add("El nombre de usuario ya existe");
+                    return BadRequest(_respuestaAPI);
+                }
+
+                var usuario = await _usuarioRepository.Registro(crearUsuarioDTO);
+
+                if(usuario == null)
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                    _respuestaAPI.ErrorMessage.Add("Error en el registro");
+                    return StatusCode(500, _respuestaAPI);
+                }
+
+                _respuestaAPI.StatusCode = HttpStatusCode.Created;
+                _respuestaAPI.IsSuccess = true;
+                _respuestaAPI.Result = usuario;
+
+                return CreatedAtAction(nameof(GetUsuario), new {id = usuario.Id}, _respuestaAPI);
             }
-
-            var usuario = await _usuarioRepository.Registro(crearUsuarioDTO);
-
-            if(usuario == null)
+            catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.ErrorMessage.Add(ex.Message);
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
-                _respuestaAPI.ErrorMessage.Add("Error en el registro");
                 return StatusCode(500, _respuestaAPI);
             }
-
-            _respuestaAPI.StatusCode = HttpStatusCode.Created;
-            _respuestaAPI.IsSuccess = true;
-            _respuestaAPI.Result = usuario;
-
-            return CreatedAtAction(nameof(GetUsuario), new {id = usuario.Id}, _respuestaAPI);
         }
 
         [AllowAnonymous]
@@ -110,20 +142,30 @@ namespace ApiPeliculas.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> LoginUsuario([FromBody] UsuarioLoginDTO usuarioLoginDTO)
         {
-            var respuestaLogin = await _usuarioRepository.Login(usuarioLoginDTO);
+            try
+            {
+                var respuestaLogin = await _usuarioRepository.Login(usuarioLoginDTO);
 
-            if (respuestaLogin.Usuario == null || string.IsNullOrEmpty(respuestaLogin.Token))
+                if (respuestaLogin.Usuario == null || string.IsNullOrEmpty(respuestaLogin.Token))
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
+                    _respuestaAPI.ErrorMessage.Add("El nombre de usuario o password son incorrectos");
+                    return BadRequest(_respuestaAPI);
+                }
+
+                _respuestaAPI.IsSuccess = true;
+                _respuestaAPI.StatusCode = HttpStatusCode.OK;
+                _respuestaAPI.Result = respuestaLogin;
+                return Ok(_respuestaAPI);
+            }
+            catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
-                _respuestaAPI.ErrorMessage.Add("El nombre de usuario o password son incorrectos");
-                return BadRequest(_respuestaAPI);
+                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                return StatusCode(500, _respuestaAPI);
             }
-
-            _respuestaAPI.IsSuccess = true;
-            _respuestaAPI.StatusCode = HttpStatusCode.OK;
-            _respuestaAPI.Result = respuestaLogin;
-            return Ok(_respuestaAPI);
         }
 
         [Authorize(Roles = "Admin")]
@@ -136,33 +178,43 @@ namespace ApiPeliculas.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteUsuario([FromRoute] string id)
         {
-            if(string.IsNullOrEmpty(id))
+            try
             {
-                _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
-                _respuestaAPI.ErrorMessage.Add("Id invalido");
-                return BadRequest(_respuestaAPI);
+                if(string.IsNullOrEmpty(id))
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
+                    _respuestaAPI.ErrorMessage.Add("Id invalido");
+                    return BadRequest(_respuestaAPI);
+                }
+
+                if(!(await _usuarioRepository.ExisteUsuario(id)))
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
+                    _respuestaAPI.ErrorMessage.Add("No existe ningun usuario con ese id");
+                    return NotFound(_respuestaAPI);
+                }
+
+                UsuarioIdentity usuarioIdentity = await _usuarioRepository.GetUsuario(id);
+
+                if(!(await _usuarioRepository.DeleteUsuario(usuarioIdentity)))
+                {
+                    _respuestaAPI.IsSuccess = false;
+                    _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                    _respuestaAPI.ErrorMessage.Add($"Ocurrio un error al intentar eliminar al usuario con id: {id}");
+                    return StatusCode(500, _respuestaAPI);
+                }
+
+                return NoContent();
             }
-
-            if(!(await _usuarioRepository.ExisteUsuario(id)))
+            catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
-                _respuestaAPI.ErrorMessage.Add("No existe ningun usuario con ese id");
-                return NotFound(_respuestaAPI);
-            }
-
-            UsuarioIdentity usuarioIdentity = await _usuarioRepository.GetUsuario(id);
-
-            if(!(await _usuarioRepository.DeleteUsuario(usuarioIdentity)))
-            {
-                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.ErrorMessage.Add(ex.Message);
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
-                _respuestaAPI.ErrorMessage.Add($"Ocurrio un error al intentar eliminar al usuario con id: {id}");
                 return StatusCode(500, _respuestaAPI);
             }
-
-            return NoContent();
         }
     }
 }
