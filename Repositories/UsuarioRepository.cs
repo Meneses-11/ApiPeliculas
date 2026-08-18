@@ -4,6 +4,7 @@ using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -29,9 +30,9 @@ public class UsuarioRepository : IUsuarioRepository
         _mapper = mapper;
     }
 
-    public UsuarioIdentity GetUsuario(string id)
+    public async Task<UsuarioIdentity> GetUsuario(string id)
     {
-        return _dbContext.UsuarioIdentity.Find(id);
+        return await _dbContext.UsuarioIdentity.FindAsync(id);
     }
 
     public ICollection<UsuarioIdentity> GetUsuarios()
@@ -87,8 +88,6 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<UsuarioDatosDTO> Registro(CrearUsuarioDTO crearUsuarioDTO)
     {
-        //var passwordEncriptado = ObtenerMD5(crearUsuarioDTO.Password);
-
         UsuarioIdentity usuario = new UsuarioIdentity()
         {
             UserName = crearUsuarioDTO.NombreUsuario,
@@ -113,26 +112,17 @@ public class UsuarioRepository : IUsuarioRepository
             return _mapper.Map<UsuarioDatosDTO>(usuarioRetornado);
         }
 
-        /*_dbContext.Usuario.Add(usuario);
-        await _dbContext.SaveChangesAsync();
-
-        usuario.Password = passwordEncriptado;
-
-        return usuario;*/
         return new UsuarioDatosDTO();
     }
 
-    //Metodo para encriptar mediate MD5
-    /*public static string ObtenerMD5(string password)
+    public async Task<bool> DeleteUsuario(UsuarioIdentity usuario)
     {
-        MD5CryptoServiceProvider x = new MD5CryptoServiceProvider();
-        byte[] data = System.Text.Encoding.UTF8.GetBytes(password);
-        data = x.ComputeHash(data);
-        string resp = ""; 
-        for(int i=0; i<data.Length; i++)
-        {
-            resp += data[i].ToString("x2").ToLower();
-        }
-        return resp;
-    }*/
+        _dbContext.UsuarioIdentity.Remove(usuario);
+        return await _dbContext.SaveChangesAsync() > 0;
+    }
+
+    public async Task<bool> ExisteUsuario(string id)
+    {
+        return (await _dbContext.UsuarioIdentity.AnyAsync(usr => usr.Id == id));
+    }
 }

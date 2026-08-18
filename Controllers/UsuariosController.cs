@@ -1,12 +1,11 @@
-﻿using ApiPeliculas.Models;
+﻿using System.Net;
+using ApiPeliculas.Models;
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace ApiPeliculas.Controllers
 {
@@ -14,8 +13,6 @@ namespace ApiPeliculas.Controllers
     [ApiController]
     [Authorize]
     [ApiVersionNeutral]
-    //[ApiVersion("1.0")]
-    //[ApiVersion("2.0")]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioRepository _usuarioRepository;
@@ -29,9 +26,10 @@ namespace ApiPeliculas.Controllers
             _respuestaAPI = new RespuestaAPI();
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpGet()]
         [ResponseCache(CacheProfileName = "Global30Cache")]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult GetUsuarios()
@@ -40,28 +38,35 @@ namespace ApiPeliculas.Controllers
 
             var listaUsuariosDTO = new List<UsuarioDTO>();
 
-            foreach (var user in listaUsuarios)
-            {
-                listaUsuariosDTO.Add(_maper.Map<UsuarioDTO>(user));
-            }
+            listaUsuariosDTO = _maper.Map<List<UsuarioDTO>>(listaUsuarios);
 
-            return Ok(listaUsuariosDTO);
+            _respuestaAPI.IsSuccess = true;
+            _respuestaAPI.StatusCode = HttpStatusCode.OK;
+            _respuestaAPI.Result = listaUsuariosDTO;
+            return Ok(_respuestaAPI);
         }
 
         [HttpGet("{id}", Name = "GetUsuario")]
         [ResponseCache(CacheProfileName = "Global30Cache")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetUsuario(string id)
         {
             var usuario = _usuarioRepository.GetUsuario(id);
 
             if (usuario == null)
-                return NotFound();
+            {
+                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
+                _respuestaAPI.ErrorMessage.Add("El usuario no Existe");
+                return NotFound(_respuestaAPI);
+            }
 
-            return Ok(_maper.Map<UsuarioDTO>(usuario));
+            _respuestaAPI.IsSuccess = true;
+            _respuestaAPI.StatusCode = HttpStatusCode.OK;
+            _respuestaAPI.Result = _maper.Map<UsuarioDTO>(usuario);
+            return Ok(_respuestaAPI);
         }
 
         [AllowAnonymous]
@@ -75,8 +80,8 @@ namespace ApiPeliculas.Controllers
 
             if (!usuarioUnico)
             {
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
                 _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
                 _respuestaAPI.ErrorMessage.Add("El nombre de usuario ya existe");
                 return BadRequest(_respuestaAPI);
             }
@@ -85,15 +90,17 @@ namespace ApiPeliculas.Controllers
 
             if(usuario == null)
             {
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
                 _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 _respuestaAPI.ErrorMessage.Add("Error en el registro");
-                return BadRequest(_respuestaAPI);
+                return StatusCode(500, _respuestaAPI);
             }
 
             _respuestaAPI.StatusCode = HttpStatusCode.Created;
             _respuestaAPI.IsSuccess = true;
-            return Ok(_respuestaAPI);
+            _respuestaAPI.Result = usuario;
+
+            return CreatedAtAction(nameof(GetUsuario), new {id = usuario.Id}, _respuestaAPI);
         }
 
         [AllowAnonymous]
@@ -107,16 +114,55 @@ namespace ApiPeliculas.Controllers
 
             if (respuestaLogin.Usuario == null || string.IsNullOrEmpty(respuestaLogin.Token))
             {
-                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
                 _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
                 _respuestaAPI.ErrorMessage.Add("El nombre de usuario o password son incorrectos");
                 return BadRequest(_respuestaAPI);
             }
 
-            _respuestaAPI.StatusCode = HttpStatusCode.OK;
             _respuestaAPI.IsSuccess = true;
+            _respuestaAPI.StatusCode = HttpStatusCode.OK;
             _respuestaAPI.Result = respuestaLogin;
             return Ok(_respuestaAPI);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteUsuario([FromRoute] string id)
+        {
+            if(string.IsNullOrEmpty(id))
+            {
+                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.BadRequest;
+                _respuestaAPI.ErrorMessage.Add("Id invalido");
+                return BadRequest(_respuestaAPI);
+            }
+
+            if(!(await _usuarioRepository.ExisteUsuario(id)))
+            {
+                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.NotFound;
+                _respuestaAPI.ErrorMessage.Add("No existe ningun usuario con ese id");
+                return NotFound(_respuestaAPI);
+            }
+
+            UsuarioIdentity usuarioIdentity = await _usuarioRepository.GetUsuario(id);
+
+            if(!(await _usuarioRepository.DeleteUsuario(usuarioIdentity)))
+            {
+                _respuestaAPI.IsSuccess = false;
+                _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
+                _respuestaAPI.ErrorMessage.Add($"Ocurrio un error al intentar eliminar al usuario con id: {id}");
+                return StatusCode(500, _respuestaAPI);
+            }
+
+            return NoContent();
         }
     }
 }
