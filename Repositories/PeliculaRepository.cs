@@ -2,6 +2,7 @@
 using ApiPeliculas.Models;
 using ApiPeliculas.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ApiPeliculas.Repositories;
 
@@ -12,80 +13,154 @@ public class PeliculaRepository : IPeliculaRepository
     {
         _dbContext = dbContext;
     }
-    public bool CreatePelicula(Pelicula pelicula)
-    {
-        pelicula.FechaCreacion = DateTime.Now;
-        _dbContext.Pelicula.Add(pelicula);
-        return Save();
-    }
 
-    public bool DeletePelicula(Pelicula pelicula)
+    public async Task<int> GetTotalPeliculas()
     {
-        _dbContext.Pelicula.Remove(pelicula);
-        return Save();
-    }
-
-    public bool EditPelicula(Pelicula pelicula)
-    {
-        pelicula.FechaCreacion = DateTime.Now;
-        var peliculaExistente = _dbContext.Pelicula.Find(pelicula.Id);
-        if(peliculaExistente != null)
+        try
         {
-            _dbContext.Entry(peliculaExistente).CurrentValues.SetValues(pelicula);
+            return await _dbContext.Pelicula.CountAsync();
         }
-        else
+        catch (Exception ex)
         {
-
-            _dbContext.Pelicula.Update(pelicula);
+            throw new Exception($"Error al obtener total peliculas: {ex.Message}");
         }
-        return Save();
     }
 
-    public bool ExistPelicula(int id)
+    public async Task<ICollection<Pelicula>> GetPeliculas(int pageNumber, int pageSize)
     {
-        return _dbContext.Pelicula.Any(peli => peli.Id == id);
+        try
+        {
+            return await _dbContext.Pelicula.OrderBy(pel => pel.Nombre).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener peliculas: {ex.Message}");
+        }
     }
 
-    public bool ExistPelicula(string nombre)
+    public async Task<ICollection<Pelicula>> GetPeliculasXCategoria(int idCategoria)
     {
-        return _dbContext.Pelicula.Any(peli => peli.Nombre == nombre);
+        try
+        {
+            return await _dbContext.Pelicula.Include(ca => ca.Categoria).Where(peli => peli.categoriaId == idCategoria).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener peliculas por categoria: {ex.Message}");
+        }
     }
 
-    public Pelicula GetPelicula(int id)
+    public async Task<IEnumerable<Pelicula>> SearchPelicula(string nombrePelicula)
     {
-        return _dbContext.Pelicula.FirstOrDefault(peli => peli.Id == id);
+        try
+        {
+            if (!string.IsNullOrEmpty(nombrePelicula))
+                return await _dbContext.Pelicula.Where(peli => peli.Nombre.Contains(nombrePelicula) || peli.Descripcion.Contains(nombrePelicula)).ToListAsync();
+
+            return new List<Pelicula>();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener peliculas: {ex.Message}");
+        }
     }
 
-    //public ICollection<Pelicula> GetPeliculas()
-    //{
-    //    return _dbContext.Pelicula.OrderBy(pel => pel.Nombre).ToList();
-    //}
-
-    public int GetTotalPeliculas()
+    public async Task<Pelicula> GetPelicula(int id)
     {
-        return _dbContext.Pelicula.Count();
+        try
+        {
+            return await _dbContext.Pelicula.FirstOrDefaultAsync(peli => peli.Id == id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al obtener peliculas buscador: {ex.Message}");
+        }
     }
 
-    public ICollection<Pelicula> GetPeliculas(int pageNumber, int pageSize)
+    public async Task<bool> ExistPelicula(int id)
     {
-        return _dbContext.Pelicula.OrderBy(pel => pel.Nombre).Skip((pageNumber-1)*pageSize).Take(pageSize).ToList();
+        try
+        {
+            return await _dbContext.Pelicula.AnyAsync(peli => peli.Id == id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error en Existe pelicula: {ex.Message}");
+        }
     }
 
-    public ICollection<Pelicula> GetPeliculasXCategoria(int idCategoria)
+    public async Task<bool> ExistPelicula(string nombre)
     {
-        return _dbContext.Pelicula.Include(ca => ca.Categoria).Where(peli => peli.categoriaId == idCategoria).ToList();
+        try
+        {
+            return await _dbContext.Pelicula.AnyAsync(peli => peli.Nombre == nombre);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error en existe pelicula: {ex.Message}");
+        }
     }
 
-    public bool Save()
+    public async Task<bool> CreatePelicula(Pelicula pelicula)
     {
-        return _dbContext.SaveChanges() > 0;
+        try
+        {
+            pelicula.FechaCreacion = DateTime.Now;
+            await _dbContext.Pelicula.AddAsync(pelicula);
+            return await Save();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.ToString());
+            throw new Exception($"Error al crear peliculas: {ex.Message}");
+        }
     }
 
-    public IEnumerable<Pelicula> SearchPelicula(string nombrePelicula)
+    public async Task<bool> DeletePelicula(Pelicula pelicula)
     {
-        if(!string.IsNullOrEmpty(nombrePelicula))
-            return _dbContext.Pelicula.Where(peli => peli.Nombre.Contains(nombrePelicula) || peli.Descripcion.Contains(nombrePelicula)).ToList();
+        try
+        {
+            _dbContext.Pelicula.Remove(pelicula);
+            return await Save();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al eliminar peliculas: {ex.Message}");
+        }
+    }
 
-        return new List<Pelicula>();
+    public async Task<bool> EditPelicula(Pelicula pelicula)
+    {
+        try
+        {
+            var peliculaExistente = await _dbContext.Pelicula.FindAsync(pelicula.Id);
+            if (peliculaExistente != null)
+            {
+                _dbContext.Entry(peliculaExistente).CurrentValues.SetValues(pelicula);
+            }
+            else
+            {
+
+                _dbContext.Pelicula.Update(pelicula);
+            }
+            return await Save();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al editar peliculas: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> Save()
+    {
+        try
+        {
+            return await _dbContext.SaveChangesAsync() > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error {ex.ToString()}");
+            throw new Exception($"Error al guardar cambios: {ex.Message}");
+        }
     }
 }
