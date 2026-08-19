@@ -4,12 +4,13 @@ namespace ApiPeliculas.Repositories.IRepositories;
 
 public interface ICategoriaRepository
 {
-    ICollection<Categoria> GetCategorias();
-    Categoria GetCategoria(int id);
-    bool ExisteCategoria(int id);
-    bool ExisteCategoria(string nombre);
-    bool CrearCategoria(Categoria categoria);
-    bool EditCategoria(Categoria categoria);
-    bool DeleteCategoria(Categoria categoria);
-    bool Guardar();
+    Task<ICollection<Categoria>> GetCategorias();
+    Task<Categoria> GetCategoria(int id);
+    Task<bool> ExisteCategoria(int id);
+    Task<bool> ExisteCategoria(string nombre);
+    Task<bool> ExisteCategoriaPorNombreExceptoId(string nombre, int id);
+    Task<bool> CrearCategoria(Categoria categoria);
+    Task<bool> EditCategoria(Categoria categoria);
+    Task<bool> DeleteCategoria(Categoria categoria);
+    Task<bool> Guardar();
 }

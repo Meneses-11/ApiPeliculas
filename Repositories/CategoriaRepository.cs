@@ -1,6 +1,7 @@
 ﻿using ApiPeliculas.Data;
 using ApiPeliculas.Models;
 using ApiPeliculas.Repositories.IRepositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiPeliculas.Repositories;
 
@@ -13,58 +14,126 @@ public class CategoriaRepository : ICategoriaRepository
         _dbContext = dBContext;
     }
 
-    public bool CrearCategoria(Categoria categoria)
+    public async Task<bool> CrearCategoria(Categoria categoria)
     {
-        categoria.FechaCreacion = DateTime.Now;
-        _dbContext.Categoria.Add(categoria);
-        return Guardar();
-    }
-
-    public bool DeleteCategoria(Categoria categoria)
-    {
-        _dbContext.Categoria.Remove(categoria);
-        return Guardar();
-    }
-
-    public bool EditCategoria(Categoria categoria)
-    {
-        categoria.FechaCreacion = DateTime.Now;
-
-        var categoriaExistente = _dbContext.Categoria.Find(categoria.Id);
-        if(categoriaExistente != null)
+        try
         {
-            _dbContext.Entry(categoriaExistente).CurrentValues.SetValues(categoria);
+            categoria.FechaCreacion = DateTime.Now;
+            await _dbContext.Categoria.AddAsync(categoria);
+            return await Guardar();
         }
-        else
+        catch (Exception ex)
         {
-            _dbContext.Categoria.Update(categoria);
+            throw new Exception($"Error al Intentar Crear Categoria: {ex.Message}");
         }
-
-        return Guardar();
     }
 
-    public bool ExisteCategoria(int id)
+    public async Task<bool> DeleteCategoria(Categoria categoria)
     {
-        return _dbContext.Categoria.Any(cat => cat.Id == id);
+        try
+        {
+            _dbContext.Categoria.Remove(categoria);
+            return await Guardar();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Intentar Eliminar Categoria: {ex.Message}");
+        }
     }
 
-    public bool ExisteCategoria(string nombre)
+    public async Task<bool> EditCategoria(Categoria categoria)
     {
-        return _dbContext.Categoria.Any(cat => cat.Nombre.ToLower().Trim() == nombre.ToLower().Trim());
+        try
+        {
+
+            var categoriaExistente = await _dbContext.Categoria.FindAsync(categoria.Id);
+            if (categoriaExistente != null)
+            {
+                categoria.FechaCreacion = categoriaExistente.FechaCreacion;
+                _dbContext.Entry(categoriaExistente).CurrentValues.SetValues(categoria);
+            }
+            else
+            {
+                _dbContext.Categoria.Update(categoria);
+            }
+
+            return await Guardar();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Intentar Editar Categoria: {ex.Message}");
+        }
     }
 
-    public Categoria GetCategoria(int id)
+    public async Task<bool> ExisteCategoria(int id)
     {
-        return _dbContext.Categoria.FirstOrDefault(c => c.Id == id);
+        try
+        {
+            return await _dbContext.Categoria.AnyAsync(cat => cat.Id == id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Verificar Categoria: {ex.Message}");
+        }
     }
 
-    public ICollection<Categoria> GetCategorias()
+    public async Task<bool> ExisteCategoria(string nombre)
     {
-        return _dbContext.Categoria.OrderBy(c => c.Nombre).ToList();
+        try
+        {
+            return await _dbContext.Categoria.AnyAsync(cat => cat.Nombre.ToLower().Trim() == nombre.ToLower().Trim());
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Verificar Categoria: {ex.Message}");
+        }
     }
 
-    public bool Guardar()
+    public async Task<bool> ExisteCategoriaPorNombreExceptoId(string nombre, int id)
     {
-        return _dbContext.SaveChanges() > 0;
+        try
+        {
+            return await _dbContext.Categoria.AnyAsync(ctgr => ctgr.Nombre.ToLower().Trim() == nombre.ToLower().Trim() && ctgr.Id != id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Verificar Categoria: {ex.Message}");
+        }
+    }
+
+    public async Task<Categoria> GetCategoria(int id)
+    {
+        try
+        {
+            return await _dbContext.Categoria.FirstOrDefaultAsync(c => c.Id == id);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Intentar Obtener Categoria: {ex.Message}");
+        }
+    }
+
+    public async Task<ICollection<Categoria>> GetCategorias()
+    {
+        try
+        {
+            return await _dbContext.Categoria.OrderBy(c => c.Nombre).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Intentar Obtener Categorias: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> Guardar()
+    {
+        try
+        {
+            return await _dbContext.SaveChangesAsync() > 0;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error al Intentar Guardar cambios en bd: {ex.Message}");
+        }
     }
 }

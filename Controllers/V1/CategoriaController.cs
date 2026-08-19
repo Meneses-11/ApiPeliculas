@@ -1,22 +1,23 @@
-﻿using ApiPeliculas.Models;
+﻿using ApiPeliculas.Helpers;
+using ApiPeliculas.Models;
 using ApiPeliculas.Models.DTOs;
 using ApiPeliculas.Repositories.IRepositories;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ApiPeliculas.Controllers.V1;
 
+//[ResponseCache(Duration = 20)] //Cache a nivel controlador, Tiempo en segundos
+//[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
+//[Obsolete("Esta version del controlador esta obsoleta")]
+
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
-//[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
-//[Authorize(Roles = "Administrador")]
-//[ResponseCache(Duration = 20)] //Cache a nivel controlador, Tiempo en segundos
-[ApiVersion("1.0")]//, Deprecated = true)]
-//[Obsolete("Esta version del controlador esta obsoleta")]
+[Authorize]
+[ApiVersion("1.0")]
 public class CategoriaController : ControllerBase
 {
     private readonly ICategoriaRepository _repositoryCategoria;
@@ -28,160 +29,218 @@ public class CategoriaController : ControllerBase
         _mapper = mapper;
     }
 
-    [HttpGet("GetString")]
-    //[MapToApiVersion("2.0")]
-    public IEnumerable<string> Get()
-    {
-        return new string[] { "valor1", "valor2", "valor3" };
-    }
-
-    //[AllowAnonymous]  //Poner publico aunque la clase tenga authorize
     [HttpGet()]
-    //[ResponseCache(Duration = 20)]
     [ResponseCache(CacheProfileName = "Global30Cache")]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    //[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un endpoint 
-    //[MapToApiVersion("1.0")]
-    public IActionResult GetCategorias()
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> GetCategorias()
     {
-        var listaCategorias = _repositoryCategoria.GetCategorias();
-
-        var listaCategoriasDTO = new List<CategoriaDTO>();
-
-        foreach (var cat in listaCategorias)
+        try
         {
-            listaCategoriasDTO.Add(_mapper.Map<CategoriaDTO>(cat));
-        }
+            var listaCategorias = await _repositoryCategoria.GetCategorias();
 
-        return Ok(listaCategoriasDTO);
+            if (listaCategorias is null || listaCategorias.Count == 0)
+                return NotFound(RespuestaAPIHelper.Error("No se encontro ninguna catgoria", HttpStatusCode.NotFound));
+
+            var listaCategoriasDTO = new List<CategoriaDTO>();
+
+            listaCategoriasDTO = _mapper.Map<List<CategoriaDTO>>(listaCategorias);
+
+            return Ok(RespuestaAPIHelper.Success(listaCategoriasDTO));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+        }
     }
 
-    //[AllowAnonymous]
     [HttpGet("{id:int}", Name = "GetCategoria")]
-    //[ResponseCache(Duration = 40)]
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)] //Donde guardar cliente o servidor, Las respoestas no deben ser almacenadas en cache
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    //[Obsolete("Este endpoint del controlador esta obsoleta")]
-    public IActionResult GetCategoria([FromRoute] int id)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> GetCategoria([FromRoute] int id)
     {
-        var categoria = _repositoryCategoria.GetCategoria(id);
+        try
+        {
+            if (id <= 0)
+                return BadRequest(RespuestaAPIHelper.Error("Id invalido", HttpStatusCode.BadRequest));
 
-        if (categoria == null) return NotFound();
+            var categoria = await _repositoryCategoria.GetCategoria(id);
 
-        var categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+            if (categoria == null) 
+                return NotFound(RespuestaAPIHelper.Error("No se encontro ninguna categoria con ese Id", HttpStatusCode.NotFound));
 
-        return Ok(categoriaDTO);
+            var categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+
+            return Ok(RespuestaAPIHelper.Success(categoriaDTO));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+        }
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult PostCategoria([FromBody] CrearCategoriaDTO crearCategoriaDTO)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> PostCategoria([FromBody] CrearCategoriaDTO crearCategoriaDTO)
     {
-        if(!ModelState.IsValid) return BadRequest(ModelState);
-
-        if(crearCategoriaDTO == null) return BadRequest(ModelState);
-
-        if (_repositoryCategoria.ExisteCategoria(crearCategoriaDTO.Nombre))
+        try
         {
-            ModelState.AddModelError("","La categoria ya existe");
-            return StatusCode(404, ModelState);
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(errs => errs.Errors).Select(errs => errs.ErrorMessage).ToList();
+                return BadRequest(RespuestaAPIHelper.Error(errors, HttpStatusCode.BadRequest));
+            }
+
+            if (await _repositoryCategoria.ExisteCategoria(crearCategoriaDTO.Nombre))
+                return Conflict(RespuestaAPIHelper.Error("Ya existe una categoria con ese nombre", HttpStatusCode.Conflict));
+            
+            var categoria = _mapper.Map<Categoria>(crearCategoriaDTO);
+
+            if (!await _repositoryCategoria.CrearCategoria(categoria))
+                return StatusCode(500, RespuestaAPIHelper.Error("Algo salio mal al crear categoria"));
+
+            CategoriaDTO categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+
+            return CreatedAtRoute(
+                nameof(GetCategoria), 
+                new { id = categoria.Id }, 
+                RespuestaAPIHelper.Success(categoriaDTO, HttpStatusCode.Created)
+                );
         }
-
-        var categoria = _mapper.Map<Categoria>(crearCategoriaDTO);
-
-        if (!_repositoryCategoria.CrearCategoria(categoria))
+        catch (Exception ex)
         {
-            ModelState.AddModelError("", $"Algo salio mal guardando el registro {categoria.Nombre}");
-            return StatusCode(404, ModelState);
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
         }
-
-        return CreatedAtRoute("GetCategoria", new { id = categoria.Id }, categoria);
     }
 
-    [Authorize(Roles = "Administrador")]
-    [HttpPatch("{id:int}", Name = "PatchCategoria")] //Patch nos permite actualizar solo un campo
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("{id:int}", Name = "PatchCategoria")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult PatchCategoria(int id, [FromBody] CategoriaDTO categoriaDTO)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> PatchCategoria(int id, [FromBody] CategoriaEditarDTO categoriaEditarDTO)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        if (categoriaDTO == null || id != categoriaDTO.Id) return BadRequest(ModelState);
-
-        var categoriaExistente = _repositoryCategoria.GetCategoria(id);
-        if (categoriaExistente == null) return NotFound($"No se encontro la categoria con id: {id}");
-
-        var categoria = _mapper.Map<Categoria>(categoriaDTO);
-
-        if (!_repositoryCategoria.EditCategoria(categoria))
+        try
         {
-            ModelState.AddModelError("", $"Algo salio mal actualizando el registro {categoria.Nombre}");
-            return StatusCode(500, ModelState);
-        }
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(errs => errs.Errors).Select(errs => errs.ErrorMessage).ToList();
+                return BadRequest(RespuestaAPIHelper.Error(errors, HttpStatusCode.BadRequest));
+            }
 
-        return NoContent();
+            if (id != categoriaEditarDTO.Id) 
+                return BadRequest(RespuestaAPIHelper.Error("Los id's deben coincidir", HttpStatusCode.BadRequest));
+
+            var categoriaExistente = await _repositoryCategoria.GetCategoria(id);
+            if (categoriaExistente == null) 
+                return NotFound(RespuestaAPIHelper.Error($"No se encontro una categoria con ese id", HttpStatusCode.NotFound));
+
+            if (await _repositoryCategoria.ExisteCategoriaPorNombreExceptoId(categoriaEditarDTO.Nombre, categoriaExistente.Id))
+                return Conflict(RespuestaAPIHelper.Error("Ya existe una categoria con ese nombre", HttpStatusCode.Conflict));
+
+            var categoria = _mapper.Map<Categoria>(categoriaEditarDTO);
+
+            if (!await _repositoryCategoria.EditCategoria(categoria))
+                return StatusCode(500, RespuestaAPIHelper.Error("Algo salio mal al editar la categoria"));
+
+            CategoriaDTO categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+
+            return Ok(RespuestaAPIHelper.Success(categoriaDTO));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+        }
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:int}", Name = "PutCategoria")] //Put nos permite actualizar todo el modelo
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public IActionResult PutCategoria(int id, [FromBody] CategoriaDTO categoriaDTO)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> PutCategoria(int id, [FromBody] CategoriaEditarDTO categoriaEditarDTO)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        if (categoriaDTO == null || id != categoriaDTO.Id) return BadRequest(ModelState);
-
-        var categoriaExistente = _repositoryCategoria.GetCategoria(id);
-        if(categoriaExistente == null) return NotFound($"No se encontro la categoria con id: {id}");
-
-        var categoria = _mapper.Map<Categoria>(categoriaDTO);
-
-        if (!_repositoryCategoria.EditCategoria(categoria))
+        try
         {
-            ModelState.AddModelError("", $"Algo salio mal actualizando el registro {categoria.Nombre}");
-            return StatusCode(500, ModelState);
-        }
+            if (!ModelState.IsValid)
+            {
+                List<string> errors = ModelState.Values.SelectMany(errs => errs.Errors).Select(errs => errs.ErrorMessage).ToList();
+                return BadRequest(RespuestaAPIHelper.Error(errors, HttpStatusCode.BadRequest));
+            }
 
-        return NoContent();
+            if (id != categoriaEditarDTO.Id)
+                return BadRequest(RespuestaAPIHelper.Error("Los id's deben coincidir", HttpStatusCode.BadRequest));
+
+            var categoriaExistente = await _repositoryCategoria.GetCategoria(id);
+            if (categoriaExistente == null)
+                return NotFound(RespuestaAPIHelper.Error($"No se encontro una categoria con ese id", HttpStatusCode.NotFound));
+
+            if (await _repositoryCategoria.ExisteCategoriaPorNombreExceptoId(categoriaEditarDTO.Nombre, categoriaExistente.Id))
+                return Conflict(RespuestaAPIHelper.Error("Ya existe una categoria con ese nombre", HttpStatusCode.Conflict));
+
+            var categoria = _mapper.Map<Categoria>(categoriaEditarDTO);
+
+            if (!await _repositoryCategoria.EditCategoria(categoria))
+                return StatusCode(500, RespuestaAPIHelper.Error("Algo salio mal al editar la categoria"));
+
+            CategoriaDTO categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+
+            return Ok(RespuestaAPIHelper.Success(categoriaDTO));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+        }
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}", Name = "DeleteCategoria")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult DeleteCategoria(int id)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+    public async Task<IActionResult> DeleteCategoria(int id)
     {
-        if (!_repositoryCategoria.ExisteCategoria(id)) return NotFound();
-
-        var categoria = _repositoryCategoria.GetCategoria(id);
-
-        if (!_repositoryCategoria.DeleteCategoria(categoria))
+        try
         {
-            ModelState.AddModelError("", $"Algo salio mal borrando el registro {id}");
-            return StatusCode(500, ModelState);
-        }
+            if(id <= 0)
+                return BadRequest(RespuestaAPIHelper.Error("Id invalido", HttpStatusCode.BadRequest));
 
-        return NoContent();
+            if (!await _repositoryCategoria.ExisteCategoria(id))
+                return NotFound(RespuestaAPIHelper.Error("No existe una categoria con ese Id", HttpStatusCode.NotFound));
+
+            var categoria = await _repositoryCategoria.GetCategoria(id);
+
+            if (!await _repositoryCategoria.DeleteCategoria(categoria))
+                return StatusCode(500, RespuestaAPIHelper.Error("Algo salio mal al eliminar la Categoria"));
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+        }
     }
 }

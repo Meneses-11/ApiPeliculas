@@ -179,7 +179,7 @@ public class PeliculasController : ControllerBase
             if(crearPeliculaDTO.Imagen != null && !ImagenesPermitidas.Contains(Path.GetExtension(crearPeliculaDTO.Imagen.FileName).ToLower()))
                 return BadRequest(RespuestaAPIHelper.Error("Formato de imagen no permitido", HttpStatusCode.BadRequest));
 
-            if(!_repositoryCategoria.ExisteCategoria(crearPeliculaDTO.categoriaId))
+            if(!await _repositoryCategoria.ExisteCategoria(crearPeliculaDTO.categoriaId))
                 return BadRequest(RespuestaAPIHelper.Error("No existe ninguna categoria con ese Id", HttpStatusCode.BadRequest));
 
             var pelicula = _mapper.Map<Pelicula>(crearPeliculaDTO);
@@ -261,7 +261,7 @@ public class PeliculasController : ControllerBase
             if (actualizarPeliculaDTO.Imagen != null && !ImagenesPermitidas.Contains(Path.GetExtension(actualizarPeliculaDTO.Imagen.FileName).ToLower()))
                 return BadRequest(RespuestaAPIHelper.Error("Formato de imagen no permitido", HttpStatusCode.BadRequest));
 
-            if (!_repositoryCategoria.ExisteCategoria(actualizarPeliculaDTO.categoriaId))
+            if (! await _repositoryCategoria.ExisteCategoria(actualizarPeliculaDTO.categoriaId))
                 return BadRequest(RespuestaAPIHelper.Error("No existe ninguna categoria con ese Id", HttpStatusCode.BadRequest));
 
             var pelicula = _mapper.Map<Pelicula>(actualizarPeliculaDTO);
