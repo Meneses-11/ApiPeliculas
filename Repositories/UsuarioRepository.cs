@@ -70,10 +70,20 @@ public class UsuarioRepository : IUsuarioRepository
     {
         try
         {
-            var usuario = _dbContext.UsuarioIdentity.FirstOrDefault(usr => usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower());
+            var usuario = await _dbContext.UsuarioIdentity.FirstOrDefaultAsync(usr => usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower());
+
+            if (usuario == null)
+            {
+                return new UsuarioResponseDTO()
+                {
+                    Token = "",
+                    Usuario = null
+                };
+            }
+
             bool isValid = await _userMAnager.CheckPasswordAsync(usuario, usuarioLoginDTO.Password);
 
-            if (usuario == null || !isValid)
+            if (!isValid)
             {
                 return new UsuarioResponseDTO()
                 {

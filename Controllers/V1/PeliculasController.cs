@@ -53,7 +53,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -81,7 +81,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -120,7 +120,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -148,7 +148,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -226,7 +226,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -313,7 +313,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 
@@ -355,7 +355,7 @@ public class PeliculasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message, HttpStatusCode.InternalServerError));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor", HttpStatusCode.InternalServerError));
         }
     }
 }

@@ -51,7 +51,7 @@ namespace ApiPeliculas.Controllers
             catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.ErrorMessage.Add("Ocurrió un Error interno en el servidor");
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, _respuestaAPI);
             }
@@ -85,7 +85,7 @@ namespace ApiPeliculas.Controllers
             catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.ErrorMessage.Add("Ocurrió un Error interno en el servidor");
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, _respuestaAPI);
             }
@@ -129,7 +129,7 @@ namespace ApiPeliculas.Controllers
             catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.ErrorMessage.Add("Ocurrió un Error interno en el servidor");
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, _respuestaAPI);
             }
@@ -162,7 +162,7 @@ namespace ApiPeliculas.Controllers
             catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.ErrorMessage.Add("Ocurrió un Error interno en el servidor");
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, _respuestaAPI);
             }
@@ -211,7 +211,7 @@ namespace ApiPeliculas.Controllers
             catch (Exception ex)
             {
                 _respuestaAPI.IsSuccess = false;
-                _respuestaAPI.ErrorMessage.Add(ex.Message);
+                _respuestaAPI.ErrorMessage.Add("Ocurrió un Error interno en el servidor");
                 _respuestaAPI.StatusCode = HttpStatusCode.InternalServerError;
                 return StatusCode(500, _respuestaAPI);
             }

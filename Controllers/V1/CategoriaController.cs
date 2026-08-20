@@ -10,10 +10,6 @@ using System.Net;
 
 namespace ApiPeliculas.Controllers.V1;
 
-//[ResponseCache(Duration = 20)] //Cache a nivel controlador, Tiempo en segundos
-//[EnableCors("NombrePoliticaCORS")] Por si se quiere aplicar CORS directamente a un controlador 
-//[Obsolete("Esta version del controlador esta obsoleta")]
-
 [Route("api/v{version:apiVersion}/[controller]")]
 [ApiController]
 [Authorize]
@@ -52,7 +48,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 
@@ -81,7 +77,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 
@@ -121,7 +117,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 
@@ -165,7 +161,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 
@@ -209,7 +205,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 
@@ -240,7 +236,7 @@ public class CategoriaController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, RespuestaAPIHelper.Error(ex.Message));
+            return StatusCode(500, RespuestaAPIHelper.Error("Ocurrió un Error interno en el servidor"));
         }
     }
 }
