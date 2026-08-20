@@ -96,7 +96,7 @@ namespace ApiPeliculas.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RegistroUsuario([FromBody] CrearUsuarioDTO crearUsuarioDTO)
+        public async Task<IActionResult> RegistroUsuario([FromBody] UsuarioCrearDTO crearUsuarioDTO)
         {
             try 
             { 

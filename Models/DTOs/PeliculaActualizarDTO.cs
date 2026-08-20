@@ -2,7 +2,7 @@
 
 namespace ApiPeliculas.Models.DTOs;
 
-public class ActualizarPeliculaDTO
+public class PeliculaActualizarDTO
 {
     public int Id { get; set; }
     public string Nombre { get; set; }
@@ -14,8 +14,8 @@ public class ActualizarPeliculaDTO
     public TipoClasificacion Clasificacion { get; set; }
     public enum TipoClasificacion
     {
-        Siete, Trece, Diecisei, Dieciocho
+        Siete, Trece, Dieciseis, Dieciocho
     }
     public DateTime? FechaCreacion { get; set; }
-    public int categoriaId { get; set; }
+    public int CategoriaId { get; set; }
 }

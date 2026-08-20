@@ -2,7 +2,7 @@
 
 namespace ApiPeliculas.Models.DTOs;
 
-public class CrearUsuarioDTO
+public class UsuarioCrearDTO
 {
     [Required(ErrorMessage = "El nombre de usuario es obligatorio")]
     public string NombreUsuario { get; set; }

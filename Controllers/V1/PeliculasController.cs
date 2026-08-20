@@ -5,7 +5,6 @@ using ApiPeliculas.Repositories.IRepositories;
 using Asp.Versioning;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -159,7 +158,7 @@ public class PeliculasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-    public async Task<IActionResult> PostPelicula([FromForm] CrearPeliculaDTO crearPeliculaDTO)
+    public async Task<IActionResult> PostPelicula([FromForm] PeliculaCrearDTO crearPeliculaDTO)
     {
         try
         {
@@ -179,7 +178,7 @@ public class PeliculasController : ControllerBase
             if(crearPeliculaDTO.Imagen != null && !ImagenesPermitidas.Contains(Path.GetExtension(crearPeliculaDTO.Imagen.FileName).ToLower()))
                 return BadRequest(RespuestaAPIHelper.Error("Formato de imagen no permitido", HttpStatusCode.BadRequest));
 
-            if(!await _repositoryCategoria.ExisteCategoria(crearPeliculaDTO.categoriaId))
+            if(!await _repositoryCategoria.ExisteCategoria(crearPeliculaDTO.CategoriaId))
                 return BadRequest(RespuestaAPIHelper.Error("No existe ninguna categoria con ese Id", HttpStatusCode.BadRequest));
 
             var pelicula = _mapper.Map<Pelicula>(crearPeliculaDTO);
@@ -238,7 +237,7 @@ public class PeliculasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-    public async Task<IActionResult> PatchPelicula(int id, [FromForm] ActualizarPeliculaDTO actualizarPeliculaDTO)
+    public async Task<IActionResult> PatchPelicula(int id, [FromForm] PeliculaActualizarDTO actualizarPeliculaDTO)
     {
         try
         {
@@ -261,7 +260,7 @@ public class PeliculasController : ControllerBase
             if (actualizarPeliculaDTO.Imagen != null && !ImagenesPermitidas.Contains(Path.GetExtension(actualizarPeliculaDTO.Imagen.FileName).ToLower()))
                 return BadRequest(RespuestaAPIHelper.Error("Formato de imagen no permitido", HttpStatusCode.BadRequest));
 
-            if (! await _repositoryCategoria.ExisteCategoria(actualizarPeliculaDTO.categoriaId))
+            if (! await _repositoryCategoria.ExisteCategoria(actualizarPeliculaDTO.CategoriaId))
                 return BadRequest(RespuestaAPIHelper.Error("No existe ninguna categoria con ese Id", HttpStatusCode.BadRequest));
 
             var pelicula = _mapper.Map<Pelicula>(actualizarPeliculaDTO);

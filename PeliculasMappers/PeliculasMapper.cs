@@ -9,11 +9,11 @@ public class PeliculasMapper : Profile
     public PeliculasMapper()
     {
         CreateMap<Categoria, CategoriaDTO>().ReverseMap();
-        CreateMap<Categoria, CrearCategoriaDTO>().ReverseMap();
-        CreateMap<Categoria, CategoriaEditarDTO>().ReverseMap();
+        CreateMap<Categoria, CategoriaCrearDTO>().ReverseMap();
+        CreateMap<Categoria, CategoriaActualizarDTO>().ReverseMap();
         CreateMap<Pelicula, PeliculaDTO>().ReverseMap();
-        CreateMap<Pelicula, CrearPeliculaDTO>().ReverseMap();
-        CreateMap<Pelicula, ActualizarPeliculaDTO>().ReverseMap();
+        CreateMap<Pelicula, PeliculaCrearDTO>().ReverseMap();
+        CreateMap<Pelicula, PeliculaActualizarDTO>().ReverseMap();
         CreateMap<UsuarioIdentity, UsuarioDatosDTO>().ReverseMap();
         CreateMap<UsuarioIdentity, UsuarioDTO>().ReverseMap();
     }

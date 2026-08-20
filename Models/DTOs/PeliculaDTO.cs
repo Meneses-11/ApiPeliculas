@@ -13,8 +13,8 @@ public class PeliculaDTO
     public TipoClasificacion Clasificacion { get; set; }
     public enum TipoClasificacion
     {
-        Siete, Trece, Diecisei, Dieciocho
+        Siete, Trece, Dieciseis, Dieciocho
     }
     public DateTime FechaCreacion { get; set; }
-    public int categoriaId { get; set; }
+    public int CategoriaId { get; set; }
 }

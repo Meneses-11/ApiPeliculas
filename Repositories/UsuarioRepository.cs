@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace ApiPeliculas.Repositories;
@@ -24,13 +23,13 @@ public class UsuarioRepository : IUsuarioRepository
     public UsuarioRepository(AplicationDBContext dBContext, IConfiguration config, UserManager<UsuarioIdentity> userManager, RoleManager<IdentityRole> rolManager, IMapper mapper)
     {
         _dbContext = dBContext;
-        claveSecreta = config.GetValue<string>("ApiSettings:Secret");
+        claveSecreta = config.GetValue<string>("ApiSettings:Secret") ?? throw new Exception("Clave Secreta no configurada");
         _userMAnager = userManager;
         _rolManager = rolManager;
         _mapper = mapper;
     }
 
-    public async Task<UsuarioIdentity> GetUsuario(string id)
+    public async Task<UsuarioIdentity?> GetUsuario(string id)
     {
         try
         {
@@ -70,7 +69,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         try
         {
-            var usuario = await _dbContext.UsuarioIdentity.FirstOrDefaultAsync(usr => usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower());
+            var usuario = await _dbContext.UsuarioIdentity.FirstOrDefaultAsync(usr => usr.UserName != null && (usr.UserName.ToLower() == usuarioLoginDTO.NombreUsuario.ToLower()));
 
             if (usuario == null)
             {
@@ -100,8 +99,8 @@ public class UsuarioRepository : IUsuarioRepository
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                new Claim(ClaimTypes.Name, usuario.UserName.ToString()),
-                new Claim(ClaimTypes.Role, roles.FirstOrDefault())
+                new Claim(ClaimTypes.Name, usuario?.UserName?.ToString() ?? ""),
+                new Claim(ClaimTypes.Role, roles.FirstOrDefault() ?? "")
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -123,7 +122,7 @@ public class UsuarioRepository : IUsuarioRepository
         }
     }
 
-    public async Task<UsuarioDatosDTO> Registro(CrearUsuarioDTO crearUsuarioDTO)
+    public async Task<UsuarioDatosDTO> Registro(UsuarioCrearDTO crearUsuarioDTO)
     {
         try
         {

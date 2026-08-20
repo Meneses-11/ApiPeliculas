@@ -18,7 +18,7 @@ public class CategoriaRepository : ICategoriaRepository
     {
         try
         {
-            categoria.FechaCreacion = DateTime.Now;
+            categoria.FechaCreacion = DateTime.UtcNow;
             await _dbContext.Categoria.AddAsync(categoria);
             return await Guardar();
         }
@@ -101,7 +101,7 @@ public class CategoriaRepository : ICategoriaRepository
         }
     }
 
-    public async Task<Categoria> GetCategoria(int id)
+    public async Task<Categoria?> GetCategoria(int id)
     {
         try
         {

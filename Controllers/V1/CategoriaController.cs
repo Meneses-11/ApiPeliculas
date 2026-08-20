@@ -89,7 +89,7 @@ public class CategoriaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-    public async Task<IActionResult> PostCategoria([FromBody] CrearCategoriaDTO crearCategoriaDTO)
+    public async Task<IActionResult> PostCategoria([FromBody] CategoriaCrearDTO crearCategoriaDTO)
     {
         try
         {
@@ -130,7 +130,7 @@ public class CategoriaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-    public async Task<IActionResult> PatchCategoria(int id, [FromBody] CategoriaEditarDTO categoriaEditarDTO)
+    public async Task<IActionResult> PatchCategoria(int id, [FromBody] CategoriaActualizarDTO categoriaEditarDTO)
     {
         try
         {
@@ -174,7 +174,7 @@ public class CategoriaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(RespuestaAPI))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-    public async Task<IActionResult> PutCategoria(int id, [FromBody] CategoriaEditarDTO categoriaEditarDTO)
+    public async Task<IActionResult> PutCategoria(int id, [FromBody] CategoriaActualizarDTO categoriaEditarDTO)
     {
         try
         {

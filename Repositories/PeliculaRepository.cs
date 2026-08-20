@@ -2,7 +2,6 @@
 using ApiPeliculas.Models;
 using ApiPeliculas.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ApiPeliculas.Repositories;
 
@@ -42,7 +41,7 @@ public class PeliculaRepository : IPeliculaRepository
     {
         try
         {
-            return await _dbContext.Pelicula.Include(ca => ca.Categoria).Where(peli => peli.categoriaId == idCategoria).ToListAsync();
+            return await _dbContext.Pelicula.Include(ca => ca.Categoria).Where(peli => peli.CategoriaId == idCategoria).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -65,7 +64,7 @@ public class PeliculaRepository : IPeliculaRepository
         }
     }
 
-    public async Task<Pelicula> GetPelicula(int id)
+    public async Task<Pelicula?> GetPelicula(int id)
     {
         try
         {
@@ -105,7 +104,7 @@ public class PeliculaRepository : IPeliculaRepository
     {
         try
         {
-            pelicula.FechaCreacion = DateTime.Now;
+            pelicula.FechaCreacion = DateTime.UtcNow;
             await _dbContext.Pelicula.AddAsync(pelicula);
             return await Save();
         }
