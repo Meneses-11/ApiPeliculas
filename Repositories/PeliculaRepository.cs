@@ -29,7 +29,7 @@ public class PeliculaRepository : IPeliculaRepository
     {
         try
         {
-            return await _dbContext.Pelicula.OrderBy(pel => pel.Nombre).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            return await _dbContext.Pelicula.OrderBy(pel => pel.Nombre).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync() ?? [];
         }
         catch (Exception ex)
         {

@@ -99,17 +99,15 @@ public class PeliculasController : ControllerBase
             var totalPeliculas = await _repositoryPelicula.GetTotalPeliculas();
             var peliculas = await _repositoryPelicula.GetPeliculas(pageNumber, pageSize);
 
-            if (peliculas == null || !peliculas.Any())
-            {
+            if (peliculas == null)
                 return NotFound(RespuestaAPIHelper.Error("No se encontraron Peliculas", HttpStatusCode.NotFound));
-            }
 
             var peliculasDTO = _mapper.Map<List<PeliculaDTO>>(peliculas);
 
             var response = new
             {
                 PageNumber = pageNumber,
-                pageSize = pageSize,
+                PageSize = pageSize,
                 TotalPages = (int)Math.Ceiling(totalPeliculas / (double)pageSize),
                 TotalItems = totalPeliculas,
                 Items = peliculasDTO
